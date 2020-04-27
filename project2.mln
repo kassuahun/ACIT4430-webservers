@@ -1,0 +1,131 @@
+global {
+  project project02
+}
+
+superclass common {
+  openstack {
+    image Ubuntu 18.04
+    flavor m1.small
+    keypair project02
+    user_data {
+
+      apt-get -y install ca-certificates
+      cd /tmp && wget https://apt.puppet.com/puppet6-release-xenial.deb
+      dpkg -i /tmp/puppet6-release-xenial.deb
+      
+      apt-get update
+      apt-get install -y puppet-agent
+
+      echo "10.0.39.37 project02.openstacklocal project02" >> /etc/hosts
+      echo "START=yes" >> /etc/default/puppet
+      echo "[agent]" >> /etc/puppetlabs/puppet/puppet.conf
+      echo "server = project02.openstacklocal" >> /etc/puppetlabs/puppet/puppet.conf
+      echo "runinterval = 5m" >> /etc/puppetlabs/puppet/puppet.conf
+      /opt/puppetlabs/bin/puppet resource service puppet ensure=running enable=true
+
+      wget https://github.com/kassuahun/ACIT4430-webservers/blob/master/puppet/common.pp
+      cp common.pp /etc/puppetlabs/code/environments/production/manifests/
+      #puppet apply common.pp
+    }
+  }
+  network eth0 {
+    net netsys_net
+  }
+}
+
+# Caching service
+
+host cache {
+  superclass common
+  openstack {
+    user_data {
+      puppet module install counsyl-memcached --version 0.9.3
+      wget https://raw.githubusercontent.com/kassuahun/ACIT4430-webservers/master/puppet/cache.pp
+      cp cache.pp /etc/puppetlabs/code/environments/production/manifests/
+
+      #promithuse
+      wget https://github.com/prometheus/node_exporter/releases/download/v1.0.0-rc.0/node_exporter-1.0.0-rc.0.linux-amd64.tar.gz
+      tar -xzf node_exporter-1.0.0-rc.0.linux-amd64.tar.gz
+      mv node_exporter-1.0.0-rc.0.linux-amd64/node_exporter /usr/local/bin/
+      rm -r node_exporter-1.0.0-rc.0.linux-amd64*
+      useradd -rs /bin/false node_exporter
+
+    }
+  }
+}
+
+host database-01 {
+  superclass common
+  openstack {
+    user_data {
+
+      #we have mysql 
+      puppet module install puppetlabs-mysql --version 10.4.0
+      wget https://raw.githubusercontent.com/kassuahun/ACIT4430-webservers/master/puppet/sql.pp
+      cp sql.pp /etc/puppetlabs/code/environments/production/manifests/
+      puppet apply sql.pp
+    }
+  }
+}
+
+host database-02 {
+  superclass common
+  openstack {
+    user_data {
+      puppet module install puppetlabs-mysql --version 10.4.0
+      wget https://raw.githubusercontent.com/kassuahun/ACIT4430-webservers/master/puppet/sql.pp
+      cp sql.pp /etc/puppetlabs/code/environments/production/manifests/
+      puppet apply sql.pp
+    }
+  }
+}
+
+# Loadbalancer
+
+host loadbalancer {
+  superclass common
+  openstack {
+    user_data {
+      puppet module install serverascode-pound --version 0.1.2
+      wget https://raw.githubusercontent.com/kassuahun/ACIT4430-webservers/master/puppet/loadbalancer.pp
+      cp loadbalancer.pp /etc/puppetlabs/code/environments/production/manifests/
+      puppet apply loadbalancer.pp
+    }
+  }
+}
+
+# Webserver nodes
+
+host Webserver-01 {
+  superclass common
+  openstack {
+    user_data {
+      puppet module install puppet-php --version 7.0.0
+      puppet module install puppetlabs-apache --version 5.4.0
+      wget https://raw.githubusercontent.com/kassuahun/ACIT4430-webservers/master/puppet/web.pp
+      puppet apply web.pp
+    }
+  }
+}
+
+host Webserver-02 {
+  superclass common
+  openstack {
+    user_data {
+     puppet module install puppet-php --version 7.0.0
+      puppet module install puppetlabs-apache --version 5.4.0
+      wget https://raw.githubusercontent.com/kassuahun/ACIT4430-webservers/master/puppet/web.pp
+      puppet apply web.pp
+    }
+  }
+}
+
+host nodejs {
+  superclass common
+  openstack {
+    user_data {
+      wget https://raw.githubusercontent.com/emilgab/infrastructure_project_one/master/puppet/web_nodejs.pp
+      puppet apply web_nodejs.pp
+    }
+  }
+}

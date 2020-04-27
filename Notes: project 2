@@ -1,0 +1,8 @@
+Notes: project 2
+
+Success!
+  * Foreman is running at https://project2.openstacklocal
+      Initial credentials are admin / CM4aotA5rjZXf5Sc
+  * Foreman Proxy is running at https://project2.openstacklocal:8443
+  * Puppetmaster is running at port 8140
+  The full log is at /var/log/foreman-installer/foreman.log
