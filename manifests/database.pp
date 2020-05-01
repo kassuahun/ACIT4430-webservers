@@ -1,9 +1,11 @@
-class { '::mysql::server':
-  root_password    => 'supergoodpassword',
-  override_options => {
-    mysqld         => {
-      log-bin      => '/var/log/mysql/mysql-bin.log',
-      server_id    => 0
-    }
-  },
+class mysql::server {
+  
+  package { "mysql-server": ensure => installed }
+  package { "mysql": ensure => installed }
+
+  service { "mysqld":
+    enable => true,
+    ensure => running,
+    require => Package["mysql-server"],
+  }
 }
