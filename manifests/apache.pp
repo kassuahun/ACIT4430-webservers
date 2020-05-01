@@ -1,4 +1,4 @@
-class Apacheserver{
+class apacheserver{
         package { 'apache2':
                 ensure => present,
                 notify => Service['apache2'],
