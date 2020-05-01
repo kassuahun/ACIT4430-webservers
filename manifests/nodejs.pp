@@ -1,4 +1,4 @@
-class node{
+class nodejs{
   package { 'nodejs':
     ensure => present,
   }
