@@ -1,3 +1,5 @@
-package { 'memcached':
-	ensure => present,
+class casheserver{
+	package { 'memcached':
+		ensure => present,
+	}
 }
